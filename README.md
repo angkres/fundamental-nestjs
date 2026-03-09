@@ -96,3 +96,123 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Version 1.0.0 SQL
+
+```sql
+CREATE SCHEMA fundamental;
+
+CREATE TABLE fundamental.users (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Version 2.0.0 SQL
+
+```sql
+-- =========================================
+-- SCHEMA
+-- =========================================
+CREATE SCHEMA IF NOT EXISTS fundamental;
+
+-- =========================================
+-- ROLES TABLE
+-- =========================================
+CREATE TABLE IF NOT EXISTS fundamental.roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================================
+-- PERMISSIONS TABLE
+-- =========================================
+CREATE TABLE IF NOT EXISTS fundamental.permissions (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================================
+-- USERS TABLE
+-- =========================================
+CREATE TABLE IF NOT EXISTS fundamental.users (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================================
+-- USER ROLES TABLE (USER ↔ ROLE)
+-- =========================================
+CREATE TABLE IF NOT EXISTS fundamental.user_roles (
+    user_id BIGINT NOT NULL,
+    role_id INT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT fk_user_roles_user
+        FOREIGN KEY (user_id)
+        REFERENCES fundamental.users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_user_roles_role
+        FOREIGN KEY (role_id)
+        REFERENCES fundamental.roles(id)
+        ON DELETE CASCADE
+);
+
+-- =========================================
+-- ROLE PERMISSIONS TABLE (ROLE ↔ PERMISSION)
+-- =========================================
+CREATE TABLE IF NOT EXISTS fundamental.role_permissions (
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    CONSTRAINT fk_role_permissions_role
+        FOREIGN KEY (role_id)
+        REFERENCES fundamental.roles(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_role_permissions_permission
+        FOREIGN KEY (permission_id)
+        REFERENCES fundamental.permissions(id)
+        ON DELETE CASCADE
+);
+
+-- =========================================
+-- REFRESH TOKENS TABLE
+-- =========================================
+CREATE TABLE IF NOT EXISTS fundamental.refresh_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    token TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    revoked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_refresh_tokens_user
+        FOREIGN KEY (user_id)
+        REFERENCES fundamental.users(id)
+        ON DELETE CASCADE
+);
+
+-- =========================================
+-- INDEXES (PERFORMANCE)
+-- =========================================
+CREATE INDEX IF NOT EXISTS idx_users_email
+ON fundamental.users(email);
+
+CREATE INDEX IF NOT EXISTS idx_users_username
+ON fundamental.users(username);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user
+ON fundamental.refresh_tokens(user_id);
+
+```
