@@ -19,4 +19,7 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updated_at!: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  hashedRefreshToken!: string | null;
 }

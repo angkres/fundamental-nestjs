@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -15,7 +16,8 @@ export class UsersService {
 
     async create(createUserDto: CreateUserDto): Promise<User> {
         try {
-            const user = this.usersRepository.create(createUserDto);
+            const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+            const user = this.usersRepository.create({ ...createUserDto, password: hashedPassword });
             return await this.usersRepository.save(user);
         } catch (error: any) {
             if (error.code === '23505') { // unique violation
@@ -27,6 +29,14 @@ export class UsersService {
 
     async findAll(): Promise<User[]> {
         return await this.usersRepository.find();
+    }
+
+    async findByEmail(email: string): Promise<User | null> {
+        return await this.usersRepository.findOne({ where: { email } });
+    }
+
+    async updateRefreshToken(id: string, hashedRefreshToken: string | null): Promise<void> {
+        await this.usersRepository.update(id, { hashedRefreshToken });
     }
 
     async findOne(id: string): Promise<User> {
